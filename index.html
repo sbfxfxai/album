@@ -4,9 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>The Record — Music Player</title>
+  <meta name="description" content="Stream and showcase original music — Agents, All My Peoples Sovereignty, My Peoples Sovereignty, Destined to Depart, and more." />
+
+  <!-- Async font load — non-render-blocking -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,400&family=Outfit:wght@300;400;500&display=swap" />
+  <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,400&family=Outfit:wght@300;400;500&display=swap" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,400&family=Outfit:wght@300;400;500&display=swap" /></noscript>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -81,9 +86,10 @@
 
     .track-count {
       font-size: 0.8rem;
-      color: var(--muted);
+      color: var(--text);
       letter-spacing: 0.05em;
       text-transform: uppercase;
+      opacity: 0.65;
     }
 
     /* ── Player Panel ────────────────────────────────── */
@@ -171,7 +177,7 @@
 
     .player-track-num {
       font-size: 0.75rem;
-      color: oklch(65% 0.01 70);
+      color: oklch(75% 0.015 70);
       margin-bottom: 1.5rem;
     }
 
@@ -224,7 +230,7 @@
       display: flex;
       justify-content: space-between;
       font-size: 0.7rem;
-      color: oklch(55% 0.01 70);
+      color: oklch(72% 0.015 70);
       margin-bottom: 1.5rem;
       font-variant-numeric: tabular-nums;
     }
@@ -346,7 +352,8 @@
 
     .track-num {
       font-size: 0.8rem;
-      color: var(--muted);
+      color: var(--text);
+      opacity: 0.55;
       text-align: center;
       font-variant-numeric: tabular-nums;
     }
@@ -371,7 +378,8 @@
 
     .track-file {
       font-size: 0.72rem;
-      color: var(--muted);
+      color: var(--text);
+      opacity: 0.55;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -379,7 +387,8 @@
 
     .track-duration {
       font-size: 0.78rem;
-      color: var(--muted);
+      color: var(--text);
+      opacity: 0.6;
       text-align: right;
       font-variant-numeric: tabular-nums;
     }
@@ -418,6 +427,17 @@
         border-radius: 2px;
       }
     }
+
+    /* Screen-reader only utility */
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    }
   </style>
 </head>
 <body>
@@ -450,18 +470,19 @@
     <div class="player-track-num" id="player-num">—</div>
 
     <div class="progress-wrap">
-      <input type="range" class="progress-bar" id="progress" min="0" max="100" value="0" step="0.1" />
+      <label for="progress" class="sr-only">Playback position</label>
+      <input type="range" class="progress-bar" id="progress" min="0" max="100" value="0" step="0.1" aria-label="Playback position" />
     </div>
-    <div class="time-row">
-      <span id="time-cur">0:00</span>
-      <span id="time-dur">0:00</span>
+    <div class="time-row" aria-live="off">
+      <span id="time-cur" aria-label="Current time">0:00</span>
+      <span id="time-dur" aria-label="Total duration">0:00</span>
     </div>
 
     <div class="controls">
       <button class="btn-ctrl" id="btn-prev" title="Previous" aria-label="Previous track">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
       </button>
-      <button class="btn-ctrl btn-play" id="btn-play" title="Play / Pause" aria-label="Play or pause">
+      <button class="btn-ctrl btn-play" id="btn-play" title="Play / Pause" aria-label="Play or pause" aria-pressed="false">
         <svg id="icon-play" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
         <svg id="icon-pause" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
       </button>
@@ -471,21 +492,22 @@
     </div>
 
     <div class="volume-row">
-      <svg class="vol-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <svg class="vol-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
       </svg>
-      <input type="range" class="volume-bar" id="volume" min="0" max="1" step="0.02" value="0.8" />
+      <label for="volume" class="sr-only">Volume</label>
+      <input type="range" class="volume-bar" id="volume" min="0" max="1" step="0.02" value="0.8" aria-label="Volume" />
     </div>
   </aside>
 
   <!-- Track List -->
-  <main class="track-list">
-    <div class="track-list-header">
+  <main class="track-list" aria-label="Track listing">
+    <div class="track-list-header" role="row" aria-hidden="true">
       <span>#</span>
       <span>Title</span>
       <span style="text-align:right">Duration</span>
     </div>
-    <div id="track-rows"></div>
+    <div id="track-rows" role="list"></div>
   </main>
 
 </div>
@@ -538,14 +560,20 @@
     const row = document.createElement('div');
     row.className = 'track-item';
     row.dataset.idx = i;
+    row.setAttribute('role', 'listitem');
+    row.setAttribute('tabindex', '0');
+    row.setAttribute('aria-label', `${t.title}, track ${i+1}`);
     row.innerHTML = `
       <div class="track-num" data-num="${i+1}">${i+1}</div>
       <div class="track-info">
         <div class="track-name">${t.title}</div>
-        <div class="track-file">${t.file}</div>
+        <div class="track-file" aria-hidden="true">${t.file}</div>
       </div>
-      <div class="track-duration" data-idx="${i}">—</div>
+      <div class="track-duration" data-idx="${i}" aria-label="Duration">—</div>
     `;
+    row.addEventListener('keydown', e => {
+      if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); row.click(); }
+    });
     row.addEventListener('click', () => {
       if (currentIdx === i && isPlaying) {
         pauseAudio();
@@ -603,6 +631,8 @@
       isPlaying = true;
       iconPlay.style.display = 'none';
       iconPause.style.display = '';
+      btnPlay.setAttribute('aria-pressed', 'true');
+      btnPlay.setAttribute('aria-label', 'Pause');
       setRingsPlaying(true);
       setActiveRow(currentIdx);
     }).catch(() => {});
@@ -613,6 +643,8 @@
     isPlaying = false;
     iconPlay.style.display = '';
     iconPause.style.display = 'none';
+    btnPlay.setAttribute('aria-pressed', 'false');
+    btnPlay.setAttribute('aria-label', 'Play');
     setRingsPlaying(false);
     setActiveRow(currentIdx);
   }
